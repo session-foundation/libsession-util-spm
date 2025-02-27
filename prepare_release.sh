@@ -453,14 +453,14 @@ update_swift_package() {
 }
 
 make_release() {
-	echo "Making ${libSession_tag} release... 🚢"
+	echo "Making ${new_version} release... 🚢"
 
-	local commit_message="libSession Swift Package Manager ${libSession_tag}"
+	local commit_message="libSession Swift Package Manager ${new_version}"
 
 	cd "${repo_dir}"
 	git add "${repo_dir}/README.md" "${repo_dir}/Package.swift" "${repo_dir}/LICENSE"
 	git commit -m "$commit_message"
-	git tag -m "$commit_message" "$libSession_tag"
+	git tag -m "$commit_message" "${new_version}"
 
 	mv "${zip_path}" "${repo_dir}/libsession-util.xcframework.zip"
 
