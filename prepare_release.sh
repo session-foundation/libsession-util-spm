@@ -458,7 +458,7 @@ make_release() {
 	local commit_message="libSession Swift Package Manager ${libSession_tag}"
 
 	cd "${repo_dir}"
-	git add "${repo_dir}/README.md" "${repo_dir}/Package.swift"
+	git add "${repo_dir}/README.md" "${repo_dir}/Package.swift" "${repo_dir}/LICENSE"
 	git commit -m "$commit_message"
 	git tag -m "$commit_message" "$libSession_tag"
 
