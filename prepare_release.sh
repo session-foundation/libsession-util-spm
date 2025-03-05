@@ -237,18 +237,31 @@ retrieve_ci_build_for_tag() {
 	# Create the download dir
 	mkdir -p "${workdir}/Downloads"
 
-	# First check in stable directory
-	local stable_output="${workdir}/Downloads/stable_output.html"
-	start_spinner "Checking for stable ${libSession_tag} build on oxen.rocks"
+	# First check in tag directory
+	local tag_output="${workdir}/Downloads/tag_output.html"
+	start_spinner "Checking ${libSession_tag} build on oxen.rocks"
     
-	if check_url "${oxen_rocks_url}/stable/" "${stable_output}"; then
-		if grep -q "$file_pattern" "${stable_output}"; then
-		    download_url="${oxen_rocks_url}/stable/${file_pattern}"
-		    stop_spinner "Checking for stable ${libSession_tag} build on oxen.rocks" "success"
+	if check_url "${oxen_rocks_url}/${libSession_tag}/" "${tag_output}"; then
+		if grep -q "$file_pattern" "${tag_output}"; then
+		    download_url="${oxen_rocks_url}/${libSession_tag}/${file_pattern}"
+		    stop_spinner "Checking ${libSession_tag} build on oxen.rocks" "success"
 		fi
 	fi
 
-	# If we didn't get a download url from the stable branch then fallback to dev
+	# If we didn't get a download url from the tag directory then fallback to stable
+	if [ -z "$download_url" ]; then
+		local stable_output="${workdir}/Downloads/stable_output.html"
+		start_spinner "Checking for stable ${libSession_tag} build on oxen.rocks"
+	    
+		if check_url "${oxen_rocks_url}/stable/" "${stable_output}"; then
+			if grep -q "$file_pattern" "${stable_output}"; then
+			    download_url="${oxen_rocks_url}/stable/${file_pattern}"
+			    stop_spinner "Checking for stable ${libSession_tag} build on oxen.rocks" "success"
+			fi
+		fi
+	fi
+
+	# If we didn't get a download url from the stable directory then fallback to dev
 	if [ -z "$download_url" ]; then
 	  	stop_spinner "Checking for stable ${libSession_tag} build on oxen.rocks" "warn"
 
