@@ -7,5 +7,5 @@ This is a separate repo because Swift Package Manager does a full clone when ret
 
 ## Version
 
-* This Package: *1.3.0*
-* LibSession-Util: *v1.3.0*
+* This Package: *1.3.1*
+* LibSession-Util: *v1.3.1*
