@@ -15,8 +15,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "SessionUtil",
-            url: "https://github.com/session-foundation/libsession-util-spm/releases/download/1.5.5/libsession-util.xcframework.zip",
-            checksum: "68feabc881dd9d4e43d160396a6b5e38ab1bc5d3fea28fe76ca62a6852d09588"
+            url: "https://github.com/session-foundation/libsession-util-spm/releases/download/1.5.6/libsession-util.xcframework.zip",
+            checksum: "29197dee17ac998bbbadb15e26c06b32528155a8cd8a3ff1cf7928fa2a944275"
         )
     ]
 )
