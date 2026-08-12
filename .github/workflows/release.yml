@@ -15,6 +15,12 @@ run-name: Release libSession ${{ inputs.libsession_tag }}
 # checksum comes from `swift package compute-checksum`. The repo is public, so
 # GitHub-hosted macOS runners are free.
 #
+# WHO CAN RUN IT: `workflow_dispatch` is restricted by GitHub to accounts with
+# write access; public visibility does not change that, and it cannot be reached
+# from a fork or a pull request. The exposure surface is therefore the repo's
+# write-access list, not this file — but note this job can push to `main` and cut
+# a release, so that list should be read as "who may publish".
+#
 # Requires (repo settings, one-time):
 #   - Settings > Actions > General > Workflow permissions: "Read and write
 #     permissions", so GITHUB_TOKEN can push the commit/tag and create the release.
@@ -54,14 +60,21 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Derive versions
+      # The tag is caller-supplied and everything downstream is derived from it,
+      # so it is validated here rather than trusted. The charset is what makes the
+      # later steps safe: no shell metacharacters can reach a `run:` body, which
+      # matters because those bodies push to `main` and cut a release.
+      - name: Validate the tag and derive versions
         id: vers
         run: |
           set -euo pipefail
-          tag="${LIBSESSION_TAG}"
+          if ! printf '%s' "$LIBSESSION_TAG" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+([-.][A-Za-z0-9.]+)?$'; then
+            echo "::error::Refusing tag '$LIBSESSION_TAG' — expected e.g. v1.6.7."
+            exit 1
+          fi
           # prepare_release.sh: new_version strips a leading `v`, upstream_version keeps it.
-          echo "new_version=${tag#v}" >> "$GITHUB_OUTPUT"
-          echo "upstream_version=${tag}" >> "$GITHUB_OUTPUT"
+          echo "new_version=${LIBSESSION_TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "upstream_version=${LIBSESSION_TAG}" >> "$GITHUB_OUTPUT"
 
       # The interactive script falls back tag -> stable -> dev when a tag build is
       # missing. That is right for a human who sees which one it hit and wrong here:
@@ -83,20 +96,25 @@ jobs:
 
       - name: Skip if the version is unchanged
         if: ${{ !inputs.force }}
+        env:
+          NEW_VERSION: ${{ steps.vers.outputs.new_version }}
         run: |
           set -euo pipefail
           current="$(grep '\* LibSession-Util' README.md | cut -d '*' -f 3 | tr -d '[:space:]')"
-          if [ "$current" = "${{ steps.vers.outputs.new_version }}" ]; then
+          if [ "$current" = "$NEW_VERSION" ]; then
             echo "::error::README already names ${current}. Re-run with force: true to re-release."
             exit 1
           fi
 
       - name: Download and unpack the xcframework
+        env:
+          SRC_URL: ${{ steps.src.outputs.url }}
+          SRC_FILE: ${{ steps.src.outputs.file }}
         run: |
           set -euo pipefail
           mkdir -p work
-          curl -fSL --max-time 600 -o "work/${{ steps.src.outputs.file }}" "${{ steps.src.outputs.url }}"
-          tar -xf "work/${{ steps.src.outputs.file }}" -C work
+          curl -fSL --max-time 600 -o "work/$SRC_FILE" "$SRC_URL"
+          tar -xf "work/$SRC_FILE" -C work
           test -d "work/libsession-util-ios-${LIBSESSION_TAG}/libsession-util.xcframework"
 
       - name: Fetch the LICENSE for that tag
@@ -136,27 +154,30 @@ jobs:
           "$envsubst" < assets/Package.swift.in > Package.swift
           # The release does not exist yet, so the URL cannot be fetched — assert the
           # two values that must agree with the asset we are about to upload.
-          grep -q "${{ steps.sum.outputs.checksum }}" Package.swift
-          grep -q "download/${{ steps.vers.outputs.new_version }}/" Package.swift
+          grep -q "$checksum" Package.swift
+          grep -q "download/${new_version}/" Package.swift
 
       - name: Commit and tag
+        env:
+          NEW_VERSION: ${{ steps.vers.outputs.new_version }}
         run: |
           set -euo pipefail
-          msg="libSession Swift Package Manager ${{ steps.vers.outputs.new_version }}"
+          msg="libSession Swift Package Manager ${NEW_VERSION}"
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md Package.swift LICENSE libsession-util.xcframework.zip
           git commit -m "$msg"
-          git tag -m "$msg" "${{ steps.vers.outputs.new_version }}"
+          git tag -m "$msg" "$NEW_VERSION"
           git push origin HEAD:main
-          git push origin "${{ steps.vers.outputs.new_version }}"
+          git push origin "$NEW_VERSION"
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
+          NEW_VERSION: ${{ steps.vers.outputs.new_version }}
         run: |
           set -euo pipefail
-          gh release create "${{ steps.vers.outputs.new_version }}" \
+          gh release create "$NEW_VERSION" \
             libsession-util.xcframework.zip \
-            --title "libSession Swift Package Manager ${{ steps.vers.outputs.new_version }}" \
+            --title "libSession Swift Package Manager ${NEW_VERSION}" \
             --notes "Packages libsession-util ${LIBSESSION_TAG}."
