@@ -165,7 +165,9 @@ jobs:
           msg="libSession Swift Package Manager ${NEW_VERSION}"
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md Package.swift LICENSE libsession-util.xcframework.zip
+          # Exactly what prepare_release.sh commits. The zip is gitignored and
+          # reaches users only as a release asset, attached in the next step.
+          git add README.md Package.swift LICENSE
           git commit -m "$msg"
           git tag -m "$msg" "$NEW_VERSION"
           git push origin HEAD:main
