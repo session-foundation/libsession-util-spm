@@ -85,7 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           file="libsession-util-ios-${LIBSESSION_TAG}.tar.xz"
-          url="${OXEN_ROCKS_URL}/${LIBSESSION_TAG}/${file}"
+          url="${OXEN_ROCKS_URL}/refs/tags/${LIBSESSION_TAG}/${file}"
           code=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 60 "$url" || true)
           if [ "$code" != "200" ]; then
             echo "::error::No exact-tag build at $url (HTTP $code). Not falling back to stable/dev."

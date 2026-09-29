@@ -241,10 +241,20 @@ retrieve_ci_build_for_tag() {
 	local tag_output="${workdir}/Downloads/tag_output.html"
 	start_spinner "Checking ${libSession_tag} build on oxen.rocks"
     
-	if check_url "${oxen_rocks_url}/${libSession_tag}/" "${tag_output}"; then
+	if check_url "${oxen_rocks_url}/refs/tags/${libSession_tag}/" "${tag_output}"; then
 		if grep -q "$file_pattern" "${tag_output}"; then
 		    download_url="${oxen_rocks_url}/${libSession_tag}/${file_pattern}"
 		    stop_spinner "Checking ${libSession_tag} build on oxen.rocks" "success"
+		fi
+	fi
+
+	# If we didn't get a download url from the tag directory then fallback to the legacy path
+	if [ -z "$download_url" ]; then
+		if check_url "${oxen_rocks_url}/${libSession_tag}/" "${tag_output}"; then
+			if grep -q "$file_pattern" "${tag_output}"; then
+			    download_url="${oxen_rocks_url}/${libSession_tag}/${file_pattern}"
+			    stop_spinner "Checking ${libSession_tag} build on oxen.rocks" "success"
+			fi
 		fi
 	fi
 
