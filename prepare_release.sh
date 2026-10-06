@@ -355,7 +355,7 @@ retrieve_ci_build_for_tag() {
 
 retrieve_license_for_tag() {
 	start_spinner "Retrieving latest libSession LICENSE"
-	local license_url="https://raw.githubusercontent.com/session-foundation/libsession-util/refs/tags/${libSession_tag}/LICENSE"
+	local license_url="https://raw.githubusercontent.com/session-foundation/libsession/refs/tags/${libSession_tag}/LICENSE"
 	local license_output="${workdir}/Downloads/LICENSE"
 
 	if check_url "${license_url}" "${license_output}"; then
