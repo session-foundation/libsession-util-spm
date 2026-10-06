@@ -3,9 +3,9 @@ name: Release
 run-name: Release libSession ${{ inputs.libsession_tag }}
 
 # Manual release workflow. Mirrors prepare_release.sh's default (non `-b`) path:
-#   1. Fetch the prebuilt xcframework that libsession-util's own CI published to
+#   1. Fetch the prebuilt xcframework that libsession's own CI published to
 #      oxen.rocks for the given tag.
-#   2. Fetch that tag's LICENSE from libsession-util.
+#   2. Fetch that tag's LICENSE from libsession.
 #   3. Repackage the xcframework and compute the SPM checksum.
 #   4. Regenerate README.md and Package.swift from assets/*.in.
 #   5. Commit, tag `<version>` (no `v`), push, and publish a GitHub release with
@@ -30,7 +30,7 @@ on:
   workflow_dispatch:
     inputs:
       libsession_tag:
-        description: "libsession-util tag to package (e.g. v1.6.7)"
+        description: "libsession tag to package (e.g. v1.6.7)"
         required: true
         type: string
       force:
@@ -51,7 +51,7 @@ jobs:
 
     env:
       LIBSESSION_TAG: ${{ inputs.libsession_tag }}
-      OXEN_ROCKS_URL: https://oxen.rocks/session-foundation/libsession-util
+      OXEN_ROCKS_URL: https://oxen.rocks/session-foundation/libsession
 
     steps:
       - name: Check out
@@ -122,7 +122,7 @@ jobs:
           set -euo pipefail
           curl -fSL --max-time 60 \
             -o LICENSE \
-            "https://raw.githubusercontent.com/session-foundation/libsession-util/refs/tags/${LIBSESSION_TAG}/LICENSE"
+            "https://raw.githubusercontent.com/session-foundation/libsession/refs/tags/${LIBSESSION_TAG}/LICENSE"
 
       # `ditto` rather than `zip`: it is what prepare_release.sh uses, and it
       # preserves the symlinks and metadata inside a .framework. This is the step
